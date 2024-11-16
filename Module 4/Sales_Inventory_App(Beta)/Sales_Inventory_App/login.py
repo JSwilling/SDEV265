@@ -29,7 +29,7 @@ class LoginScreen:
 
         # Placeholder for company logo - adjust as needed
         try:
-            self.logo_image = Image.open("placeholder_logo.png")  # Ensure the image exists
+            self.logo_image = Image.open(r"Module 4\Sales_Inventory_App(Beta)\Sales_Inventory_App\placeholder_logo.png")  # Ensure the image exists
             self.logo_ctk_image = customtkinter.CTkImage(self.logo_image, size=(200, 200))
             logo_label = customtkinter.CTkLabel(
                 self.login_frame, image=self.logo_ctk_image, text="", fg_color="#ffffff"

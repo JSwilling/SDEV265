@@ -21,7 +21,7 @@ backend = Backend()
 def play_audio(file_path):
     """Play an audio file using pygame."""
     try:
-        pygame.mixer.music.load(file_path)
+        pygame.mixer.music.load(r"Module 4\Sales_Inventory_App(Beta)\Sales_Inventory_App\test.mp3")
         pygame.mixer.music.play()
     except Exception as e:
         print(f"Error playing audio file: {e}")
