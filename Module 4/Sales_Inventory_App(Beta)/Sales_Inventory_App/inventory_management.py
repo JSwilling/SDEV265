@@ -17,100 +17,144 @@ class ManageInventoryScreen:
         self.item_id_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
         self.item_id_entry.grid(row=1, column=1, padx=10, pady=5, sticky="w")
 
-        customtkinter.CTkLabel(self.manage_frame, text="Order ID:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
-        self.order_id_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
-        self.order_id_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
+        customtkinter.CTkLabel(self.manage_frame, text="Product Name:").grid(row=2, column=0, padx=10, pady=5, sticky="w")
+        self.product_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
+        self.product_entry.grid(row=2, column=1, padx=10, pady=5, sticky="w")
 
-        customtkinter.CTkLabel(self.manage_frame, text="Customer Name:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
-        self.customer_name_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
-        self.customer_name_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
+        customtkinter.CTkLabel(self.manage_frame, text="Size:").grid(row=3, column=0, padx=10, pady=5, sticky="w")
+        self.size_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
+        self.size_entry.grid(row=3, column=1, padx=10, pady=5, sticky="w")
 
-        customtkinter.CTkLabel(self.manage_frame, text="Address:").grid(row=4, column=0, padx=10, pady=5, sticky="w")
-        self.address_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
-        self.address_entry.grid(row=4, column=1, padx=10, pady=5, sticky="w")
+        customtkinter.CTkLabel(self.manage_frame, text="Quantity:").grid(row=4, column=0, padx=10, pady=5, sticky="w")
+        self.quantity_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
+        self.quantity_entry.grid(row=4, column=1, padx=10, pady=5, sticky="w")
 
-        # Radio Buttons for Status
-        status_frame = customtkinter.CTkFrame(self.manage_frame)
-        status_frame.grid(row=5, column=0, columnspan=2, pady=10, sticky="w")
+        customtkinter.CTkLabel(self.manage_frame, text="Price:").grid(row=5, column=0, padx=10, pady=5, sticky="w")
+        self.price_entry = customtkinter.CTkEntry(self.manage_frame, width=300)
+        self.price_entry.grid(row=5, column=1, padx=10, pady=5, sticky="w")
 
-        self.status_var = customtkinter.StringVar(value="")
-        status_label = customtkinter.CTkLabel(status_frame, text="Status:")
-        status_label.grid(row=0, column=0, padx=10)
-
-        self.pending_radio = customtkinter.CTkRadioButton(status_frame, text="Pending", variable=self.status_var, value="Pending", command=self.toggle_radio)
-        self.pending_radio.grid(row=0, column=1, padx=10)
-
-        self.shipped_radio = customtkinter.CTkRadioButton(status_frame, text="Shipped", variable=self.status_var, value="Shipped", command=self.toggle_radio)
-        self.shipped_radio.grid(row=0, column=2, padx=10)
-
-        self.returned_radio = customtkinter.CTkRadioButton(status_frame, text="Returned", variable=self.status_var, value="Returned", command=self.toggle_radio)
-        self.returned_radio.grid(row=0, column=3, padx=10)
-
-        # Quantity increment/decrement buttons
-        quantity_frame = customtkinter.CTkFrame(self.manage_frame)
-        quantity_frame.grid(row=6, column=0, columnspan=2, pady=10, sticky="w")
-
-        customtkinter.CTkLabel(quantity_frame, text="Quantity:").grid(row=0, column=0, padx=10)
-        self.quantity_value = customtkinter.IntVar(value=0)
-        quantity_display = customtkinter.CTkLabel(quantity_frame, textvariable=self.quantity_value)
-        quantity_display.grid(row=0, column=1, padx=10)
-
-        increment_button = customtkinter.CTkButton(quantity_frame, text="+", command=lambda: self.adjust_quantity(1))
-        increment_button.grid(row=0, column=2, padx=10)
-
-        decrement_button = customtkinter.CTkButton(quantity_frame, text="-", command=lambda: self.adjust_quantity(-1))
-        decrement_button.grid(row=0, column=3, padx=10)
-
-        # Notes Section (Right Side)
-        notes_label = customtkinter.CTkLabel(self.manage_frame, text="Notes:")
-        notes_label.grid(row=1, column=2, padx=10, pady=5, sticky="w")
-
-        self.notes_textbox = customtkinter.CTkTextbox(self.manage_frame, width=300, height=200)
-        self.notes_textbox.grid(row=2, column=2, rowspan=4, padx=10, pady=5, sticky="nw")
-
-        # Submit, Search, and Back Buttons
+        # Submit, Update, Delete Buttons
         button_frame = customtkinter.CTkFrame(self.manage_frame)
-        button_frame.grid(row=7, column=0, columnspan=3, pady=20)
+        button_frame.grid(row=6, column=0, columnspan=3, pady=20)
 
         submit_button = customtkinter.CTkButton(button_frame, text="Submit", command=self.submit_inventory, fg_color="#4267B2", hover_color="#3578E5")
         submit_button.pack(side="left", padx=15)
 
-        search_button = customtkinter.CTkButton(button_frame, text="Search", command=self.search_inventory, fg_color="#4267B2", hover_color="#3578E5")
-        search_button.pack(side="left", padx=15)
+        update_button = customtkinter.CTkButton(button_frame, text="Update", command=self.update_inventory, fg_color="#4267B2", hover_color="#3578E5")
+        update_button.pack(side="left", padx=15)
+
+        delete_button = customtkinter.CTkButton(button_frame, text="Delete", command=self.delete_inventory, fg_color="#e74c3c", hover_color="#c0392b")
+        delete_button.pack(side="left", padx=15)
 
         back_button = customtkinter.CTkButton(button_frame, text="Back", command=self.app.show_dashboard_screen, fg_color="#4267B2", hover_color="#3578E5")
         back_button.pack(side="left", padx=15)
-
-    def toggle_radio(self):
-        current_value = self.status_var.get()
-        if current_value == self.pending_radio.cget("value"):
-            self.status_var.set("")
-
-    def adjust_quantity(self, amount):
-        new_value = self.quantity_value.get() + amount
-        if new_value >= 0:
-            self.quantity_value.set(new_value)
 
     def submit_inventory(self):
         # Collect data from fields and save to backend
         data = {
             "item_id": self.item_id_entry.get(),
-            "order_id": self.order_id_entry.get(),
-            "customer_name": self.customer_name_entry.get(),
-            "address": self.address_entry.get(),
-            "status": self.status_var.get(),
-            "quantity": self.quantity_value.get(),
-            "notes": self.notes_textbox.get("1.0", "end").strip()
+            "product": self.product_entry.get(),
+            "size": self.size_entry.get(),
+            "quantity": int(self.quantity_entry.get()),
+            "price": float(self.price_entry.get())
         }
         self.backend.save_inventory(data)
         messagebox.showinfo("Success", "Inventory data saved successfully!")
 
-    def search_inventory(self):
-        # Search backend for the item_id and display the result
+    def update_inventory(self):
+        # Collect data from fields and update in backend
+        data = {
+            "item_id": self.item_id_entry.get(),
+            "product": self.product_entry.get(),
+            "size": self.size_entry.get(),
+            "quantity": int(self.quantity_entry.get()),
+            "price": float(self.price_entry.get())
+        }
+        self.backend.save_inventory(data)
+        messagebox.showinfo("Success", "Inventory data updated successfully!")
+
+    def delete_inventory(self):
+        # Delete inventory item by ID
         item_id = self.item_id_entry.get()
-        result = self.backend.query_inventory(item_id)
-        if result:
-            formatted_result = f"Item ID: {result['item_id']}\nOrder ID: {result['order_id']}\nCustomer Name: {result['customer_name']}\nAddress: {result['address']}\nStatus: {result['status']}\nQuantity: {result['quantity']}\nNotes: {result['notes']}"
-            messagebox.showinfo("Search Result", formatted_result)
-        else:
-            messagebox.showwarning("Not Found", "No inventory data found for the given Item ID.")
+        confirm = messagebox.askyesno("Confirm Delete", f"Are you sure you want to delete item ID: {item_id}?")
+        if confirm:
+            self.backend.connect()
+            try:
+                self.backend.cursor.execute('DELETE FROM items WHERE item_ID = ?', (item_id,))
+                self.backend.conn.commit()
+                messagebox.showinfo("Success", f"Item ID: {item_id} deleted successfully.")
+            except Exception as e:
+                messagebox.showerror("Error", f"Failed to delete item ID: {item_id}. Error: {e}")
+            finally:
+                self.backend.disconnect()
+
+
+
+class Inventory:
+    def __init__(self):
+        self.db_path = 'inventory.db'
+        self.conn = None
+        self.cursor = None
+
+    def connect(self):
+        self.conn = sqlite3.connect(self.db_path)
+        self.cursor = self.conn.cursor()
+
+    def disconnect(self):
+        if self.conn:
+            self.conn.close()
+
+    def create_item(self, product, size, quantity, price):
+        """Create a new inventory item record in the items table."""
+        self.connect()
+        try:
+            self.cursor.execute(
+                '''INSERT INTO items (product, size, quantity, price) VALUES (?, ?, ?, ?)''',
+                (product, size, quantity, price)
+            )
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error creating item: {e}")
+        finally:
+            self.disconnect()
+
+    def get_item(self, item_id=None):
+        """Fetch inventory item data, optionally filtered by item ID."""
+        self.connect()
+        try:
+            if item_id:
+                self.cursor.execute('SELECT * FROM items WHERE item_ID = ?', (item_id,))
+                return self.cursor.fetchone()
+            else:
+                self.cursor.execute('SELECT * FROM items')
+                return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error fetching items: {e}")
+            return []
+        finally:
+            self.disconnect()
+
+    def update_item(self, item_id, product, size, quantity, price):
+        """Update an existing inventory item record."""
+        self.connect()
+        try:
+            self.cursor.execute(
+                '''UPDATE items SET product = ?, size = ?, quantity = ?, price = ? WHERE item_ID = ?''',
+                (product, size, quantity, price, item_id)
+            )
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error updating item ID {item_id}: {e}")
+        finally:
+            self.disconnect()
+
+    def delete_item(self, item_id):
+        """Delete an inventory item from the items table."""
+        self.connect()
+        try:
+            self.cursor.execute('DELETE FROM items WHERE item_ID = ?', (item_id,))
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting item ID {item_id}: {e}")
+        finally:
+            self.disconnect()

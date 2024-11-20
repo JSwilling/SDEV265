@@ -1,30 +1,116 @@
 import tkinter as tk
 import customtkinter
 import pygame
+import sqlite3
 from login import LoginScreen
 from navigation import create_navigation_pane
 from dashboard import DashboardScreen
 from inventory_management import ManageInventoryScreen
 from settings import SettingsScreen
 from profile import ProfileScreen
-from database import create_database
-from backend import Backend
 from terminate_user import TerminateUserScreen
-from tkinter import messagebox
+from backend import Backend
+from report_generator import ReportGenerator
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import threading
 
 # Initialize Pygame mixer at the start of the script
 pygame.mixer.init()
 
 # Initialize backend
 backend = Backend()
+backend.create_database()
 
-def play_audio(file_path):
-    """Play an audio file using pygame."""
-    try:
-        pygame.mixer.music.load(r"Module 4\Sales_Inventory_App(Beta)\Sales_Inventory_App\test.mp3")
-        pygame.mixer.music.play()
-    except Exception as e:
-        print(f"Error playing audio file: {e}")
+class GenerateReportPopup(customtkinter.CTkToplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("Generate Sales Report")
+        self.geometry("600x500")
+        self.parent = parent
+
+        # Fetch item IDs from the database
+        self.item_ids = self.get_item_ids()
+
+        # Create dropdown menu
+        self.item_id_var = tk.StringVar(value=self.item_ids[0])
+        self.dropdown = customtkinter.CTkOptionMenu(
+            self,
+            values=self.item_ids,
+            variable=self.item_id_var
+        )
+        self.dropdown.pack(pady=20)
+
+        # Create button to generate report
+        self.generate_button = customtkinter.CTkButton(
+            self,
+            text="Generate Report",
+            command=self.generate_report
+        )
+        self.generate_button.pack(pady=10)
+
+        # Placeholder for the plot
+        self.canvas = None
+
+    def get_item_ids(self):
+        # Connect to the database and fetch all item IDs
+        conn = sqlite3.connect('inventory.db')
+        cursor = conn.cursor()
+        cursor.execute("SELECT item_id FROM items")
+        items = cursor.fetchall()
+        conn.close()
+        # Return a list of item IDs as strings
+        return [str(item[0]) for item in items]
+
+    def generate_report(self):
+        # Get selected item ID
+        selected_item_id = self.item_id_var.get()
+        # Start a new thread to generate the report
+        threading.Thread(target=self.create_live_plot, args=(selected_item_id,)).start()
+
+    def create_live_plot(self, item_id):
+        # Fetch sales data for the selected item from the database
+        conn = sqlite3.connect('inventory.db')
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT date, quantity FROM sales
+            WHERE item_id = ?
+            ORDER BY date ASC
+        ''', (item_id,))
+        data = cursor.fetchall()
+        conn.close()
+
+        if not data:
+            print("No sales data available for this item.")
+            return
+
+        dates = [row[0] for row in data]
+        quantities = [row[1] for row in data]
+
+        # Create the plot
+        plt.style.use('seaborn-darkgrid')
+        fig, ax = plt.subplots(figsize=(6, 4))
+        line, = ax.plot_date(dates, quantities, '-o')
+
+        ax.set_title(f"Sales Data for Item ID {item_id}")
+        ax.set_xlabel("Date")
+        ax.set_ylabel("Quantity Sold")
+
+        # Embed the plot in the Tkinter window
+        if self.canvas:
+            self.canvas.get_tk_widget().destroy()
+        self.canvas = FigureCanvasTkAgg(fig, master=self)
+        self.canvas.draw()
+        self.canvas.get_tk_widget().pack(pady=20)
+
+        # Optionally, add animation
+        # For simplicity, let's simulate live data updates
+        for _ in range(5):  # Simulate 5 updates
+            quantities = [q + 1 for q in quantities]  # Simulate data change
+            line.set_ydata(quantities)
+            self.canvas.draw()
+            plt.pause(1)  # Pause for 1 second
+
 
 class InventoryApp(customtkinter.CTk):
     def __init__(self):
@@ -38,15 +124,9 @@ class InventoryApp(customtkinter.CTk):
         self.current_user_role = None
         self.nav_frame = None
         self.is_full_screen = False
-        create_database()
-        self.backend = Backend()
-        self.protocol("WM_DELETE_WINDOW", self.on_close)
-
-        # Removed redundant LoginScreen initialization
-        # LoginScreen(self, self.login_success_callback)
 
         # Play startup jingle
-        play_audio("test.mp3")
+        self.play_audio("startup.mp3")
 
         self.show_login_screen()
 
@@ -59,9 +139,17 @@ class InventoryApp(customtkinter.CTk):
         self.attributes('-topmost', True)  # Ensure the window stays on top
         self.after(1000, lambda: self.attributes('-topmost', False))  # Remove the "always on top" after 1 second
 
+    def play_audio(self, file_path):
+        """Play an audio file using pygame."""
+        try:
+            pygame.mixer.music.load(r'Module 4\Sales_Inventory_App(Beta)\Sales_Inventory_App\test.mp3')
+            pygame.mixer.music.play()
+        except Exception as e:
+            print(f"Error playing audio file: {e}")
+
     def on_close(self):
         # Play logout sound before closing
-        play_audio("log_out_sound.mp3")
+        self.play_audio(r"Module 4\Sales_Inventory_App(Beta)\Sales_Inventory_App\log_out_sound.mp3")
         self.after(1000, self.destroy)
 
     def show_login_screen(self):
@@ -89,7 +177,7 @@ class InventoryApp(customtkinter.CTk):
     def show_manage_screen(self):
         self.clear_frames(exclude_nav=True)
         self.create_or_update_navigation_pane()
-        ManageInventoryScreen(self, self.backend)
+        ManageInventoryScreen(self, backend)
 
     def show_profile_screen(self):
         self.clear_frames(exclude_nav=True)
@@ -99,13 +187,24 @@ class InventoryApp(customtkinter.CTk):
     def show_settings_screen(self):
         self.clear_frames(exclude_nav=True)
         self.create_or_update_navigation_pane()
-        SettingsScreen(self, self.current_user_role, self.backend)
+        SettingsScreen(self, self.current_user_role, backend)
 
     def show_terminate_screen(self):
         if self.current_user_role == 'Supervisor':
             self.clear_frames(exclude_nav=True)
             self.create_or_update_navigation_pane()
-            TerminateUserScreen(self, self.backend)
+            TerminateUserScreen(self, backend)
+
+    def show_generate_report_screen(self):
+        # Generate reports using the ReportGenerator module
+        report_generator = ReportGenerator()
+        report_generator.generate_sales_report()
+        report_generator.generate_inventory_report()
+        report_generator.generate_customer_report()
+        GenerateReportPopup(self)
+        print("Reports generated successfully.")
+
+
 
     def clear_frames(self, exclude_nav=False):
         # Clear all frames except navigation if specified
@@ -131,13 +230,23 @@ class InventoryApp(customtkinter.CTk):
             except Exception as e:
                 print(f"Error destroying nav_frame: {e}")
 
+        # Prepare parameters based on user role
+        if self.current_user_role == "Supervisor":
+            show_terminate_screen = self.show_terminate_screen
+            show_generate_report_screen = self.show_generate_report_screen
+        else:
+            show_terminate_screen = None
+            show_generate_report_screen = None
+
+        # Instantiate the navigation pane with the correct parameters
         self.nav_frame = create_navigation_pane(
             self,
             self.show_dashboard_screen,
             self.show_manage_screen,
             self.show_profile_screen,
             self.show_settings_screen,
-            self.show_terminate_screen if self.current_user_role == "Supervisor" else None,
+            show_terminate_screen=show_terminate_screen,
+            show_generate_report_screen=show_generate_report_screen
         )
 
     def toggle_fullscreen(self):
@@ -149,18 +258,8 @@ class InventoryApp(customtkinter.CTk):
             self.attributes("-fullscreen", True)
             self.is_full_screen = True
 
-    def apply_glow_effect(self):
-        colors = ["#34495e", "#5a9ea3", "#7fc6c3", "#a1e0dd", "#1abc9c"]
-        delay = 100  # Time between color changes in milliseconds
-
-        def animate(index=0):
-            self.configure(border_color=colors[index % len(colors)])
-            self.after(delay, lambda: animate(index + 1))
-
-        self.configure(border_width=5)
-        animate()
-
 
 if __name__ == "__main__":
     app = InventoryApp()
+    app.protocol("WM_DELETE_WINDOW", app.on_close)  # Set up proper window close handling
     app.mainloop()

@@ -1,98 +1,113 @@
 import sqlite3
+import os
 
 class Backend:
     def __init__(self):
-        self.conn = sqlite3.connect('inventory.db')
-        self.cursor = self.conn.cursor()
-        self.create_inventory_table()
-        self.create_users_table()  # Create users table for termination functionality
-        self.inventory_data = [
-            {"name": "Laptop", "quantity": 120},
-            {"name": "Smartphone", "quantity": 250},
-            {"name": "Tablet", "quantity": 80},
-            {"name": "Monitor", "quantity": 150},
-            {"name": "Keyboard", "quantity": 300},
-            {"name": "Mouse", "quantity": 275},
-            {"name": "Headphones", "quantity": 180},
-            {"name": "External HDD", "quantity": 90},
-            {"name": "Router", "quantity": 60},
-            {"name": "Printer", "quantity": 40},
-        ]
+        self.db_path = 'inventory.db'
+        self.conn = None
+        self.cursor = None
 
-    def create_inventory_table(self):
-        self.cursor.execute('''
-            CREATE TABLE IF NOT EXISTS inventory (
-                item_id TEXT PRIMARY KEY,
-                order_id TEXT,
-                customer_name TEXT,
-                address TEXT,
-                status TEXT,
-                quantity INTEGER,
-                notes TEXT
-            )
-        ''')
-        self.conn.commit()
+    def create_database(self):
+        """Creates the necessary tables if they do not exist."""
+        if not os.path.exists(self.db_path):
+            self.conn = sqlite3.connect(self.db_path)
+            self.cursor = self.conn.cursor()
+            self._create_users_table()
+            self._create_inventory_table()
+            self._create_customers_table()
+            self._create_sales_table()
+            self._create_sales_items_table()
+            self.conn.commit()
+            self.conn.close()
 
-    def create_users_table(self):
+    def _create_users_table(self):
         self.cursor.execute('''
             CREATE TABLE IF NOT EXISTS users (
-                username TEXT PRIMARY KEY,
-                password BLOB NOT NULL,
-                role TEXT NOT NULL
+                user_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                username TEXT NOT NULL,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL,
+                date_created DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        self.conn.commit()
 
-    def save_inventory(self, data):
+    def _create_inventory_table(self):
         self.cursor.execute('''
-            INSERT OR REPLACE INTO inventory (item_id, order_id, customer_name, address, status, quantity, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (data['item_id'], data['order_id'], data['customer_name'], data['address'], data['status'], data['quantity'], data['notes']))
-        self.conn.commit()
+            CREATE TABLE IF NOT EXISTS items (
+                item_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                product TEXT NOT NULL,
+                size TEXT NOT NULL,
+                quantity INTEGER,
+                price DECIMAL(10, 2) NOT NULL,
+                date_added DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
 
-    def query_inventory(self, item_id):
-        self.cursor.execute('SELECT * FROM inventory WHERE item_id = ?', (item_id,))
-        row = self.cursor.fetchone()
-        if row:
-            return {
-                "item_id": row[0],
-                "order_id": row[1],
-                "customer_name": row[2],
-                "address": row[3],
-                "status": row[4],
-                "quantity": row[5],
-                "notes": row[6]
-            }
-        return None
+    def _create_customers_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS customers (
+                customer_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                customer_name TEXT NOT NULL,
+                customer_address TEXT NOT NULL,
+                customer_status INTEGER,
+                customer_notes TEXT,
+                date_order DATETIME DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
 
-    def get_inventory_data(self):
-        """Returns the inventory data."""
-        return self.inventory_data
+    def _create_sales_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sales (
+                sale_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_ID INTEGER NOT NULL,
+                customer_ID INTEGER NOT NULL,
+                grand_total DECIMAL(10, 2),
+                date_sale DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (user_ID) REFERENCES users(user_ID),
+                FOREIGN KEY (customer_ID) REFERENCES customers(customer_ID)
+            )
+        ''')
 
-    def update_inventory(self, item_name, quantity):
-        """Updates the inventory quantity for a given item name."""
-        for item in self.inventory_data:
-            if item["name"] == item_name:
-                item["quantity"] = quantity
-                return True
-        return False
+    def _create_sales_items_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS sales_items (
+                sale_item_ID INTEGER PRIMARY KEY AUTOINCREMENT,
+                sale_ID INTEGER NOT NULL,
+                item_ID INTEGER NOT NULL,
+                quantity INTEGER NOT NULL,
+                price DECIMAL(10, 2) NOT NULL,
+                FOREIGN KEY (sale_ID) REFERENCES sales(sale_ID),
+                FOREIGN KEY (item_ID) REFERENCES items(item_ID)
+            )
+        ''')
 
-    def add_inventory_item(self, item_name, quantity):
-        """Adds a new inventory item."""
-        self.inventory_data.append({"name": item_name, "quantity": quantity})
+    def connect(self):
+        self.conn = sqlite3.connect(self.db_path)
+        self.cursor = self.conn.cursor()
 
-    def delete_inventory_item(self, item_name):
-        """Deletes an inventory item by its name."""
-        self.inventory_data = [item for item in self.inventory_data if item["name"] != item_name]
+    def disconnect(self):
+        if self.conn:
+            self.conn.close()
 
     def get_all_users(self):
-        self.cursor.execute('SELECT username FROM users')
-        users = [row[0] for row in self.cursor.fetchall()]
-        return users
+        """Fetch all users from the users table."""
+        self.connect()
+        try:
+            self.cursor.execute('SELECT username FROM users')
+            return [row[0] for row in self.cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error fetching users: {e}")
+            return []
+        finally:
+            self.disconnect()
 
     def delete_user(self, username):
-        self.cursor.execute('DELETE FROM users WHERE username = ?', (username,))
-        self.conn.commit()
-
-    def __del__(self):
-        self.conn.close()
+        """Delete a user from the users table."""
+        self.connect()
+        try:
+            self.cursor.execute('DELETE FROM users WHERE username = ?', (username,))
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(f"Error deleting user '{username}': {e}")
+        finally:
+            self.disconnect()
