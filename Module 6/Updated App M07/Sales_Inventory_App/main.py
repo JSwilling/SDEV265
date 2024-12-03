@@ -192,7 +192,7 @@ class InventoryApp(customtkinter.CTk):
     def show_manage_screen(self):
         self.clear_frames(exclude_nav=True)
         self.create_or_update_navigation_pane()
-        ManageInventoryScreen(self, backend)
+        ManageInventoryScreen(self, backend, self.current_user_role)
 
     def show_profile_screen(self):
         self.clear_frames(exclude_nav=True)

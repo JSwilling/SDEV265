@@ -269,7 +269,7 @@ class RegisterWindow(customtkinter.CTkToplevel):
 
         self.role_optionmenu = customtkinter.CTkOptionMenu(
             self.register_frame,
-            values=["User", "Supervisor"],
+            values=["Employee", "Supervisor", "Salesperson"],
             width=300,
             height=40,
             corner_radius=10,
