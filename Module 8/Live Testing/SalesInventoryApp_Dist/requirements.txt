@@ -1,0 +1,7 @@
+customtkinter
+pygame
+pillow
+bcrypt
+matplotlib
+ttkbootstrap
+
