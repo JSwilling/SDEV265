@@ -47,11 +47,22 @@ class LoginScreen:
         )
         self.username_entry.pack(pady=5)
 
+        self.username_feedback = customtkinter.CTkLabel(
+            self.login_frame, text="", font=("Verdana", 12),
+            fg_color="#ffffff", text_color="red"
+        )
+        self.username_feedback.pack(pady=(0, 0))
+
         # Password Entry
         customtkinter.CTkLabel(
             self.login_frame, text="Password", font=("Verdana", 16),
             fg_color="#ffffff", text_color="#c0392b",
         ).pack(pady=(20, 5))
+
+        self.password_feedback = customtkinter.CTkLabel(
+            self.login_frame, text="", font=("Verdana", 12),
+            fg_color="#ffffff", text_color="red"
+        )
 
         self.app.bind("<Return>", lambda event: self.login_action())  # Bind Enter key
 
@@ -82,7 +93,7 @@ class LoginScreen:
             self.login_frame, text="Help signing in?", command=self.show_help_window,
             fg_color="transparent", text_color="#c0392b", hover=False, font=("Verdana", 12)
         )
-        help_button.pack(pady=10)
+        help_button.pack(pady=0)
 
         # Custom Close Button to close the frameless window
         close_button = customtkinter.CTkButton(
@@ -98,6 +109,23 @@ class LoginScreen:
         # Initialize fade-in effect
         self.fade_in_effect()
 
+    def validate_username(self):
+        username = self.username_entry.get()
+        if len(username) < 3:
+            self.username_feedback.configure(text="Username must be at least 3 characters long")
+        else:
+            self.username_feedback.configure(text="")
+
+    def validate_password(self):
+        password = self.password_entry.get()
+        if len(password) < 6:
+            self.password_feedback.configure(text="Password must be at least 6 characters long")
+        elif not any(char.isdigit() for char in password):
+            self.password_feedback.configure(text="Password must include at least one number")
+        elif not any(char.isupper() for char in password):
+            self.password_feedback.configure(text="Password must include at least one uppercase letter")
+        else:
+            self.password_feedback.configure(text="")
 
 
     def fade_in_effect(self, alpha=0):
@@ -170,20 +198,22 @@ class LoginScreen:
     def login_action(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
+
+        self.validate_username()
+        self.validate_password()
+
         if not username or not password:
-            messagebox.showwarning("Input Error", "Please enter both username and password.")
             return
-        conn = sqlite3.connect(r'db/Sales_Inventory.db')  # Connect to the SQLite database
+
+        conn = sqlite3.connect(r'db/Sales_Inventory.db')
         cursor = conn.cursor()
         cursor.execute("SELECT password, role FROM users WHERE username = ?", (username,))
         result = cursor.fetchone()
         conn.close()
 
         if result:
-            stored_hashed_password_base64 = result[0]  # Base64-encoded hashed password
+            stored_hashed_password_base64 = result[0]
             role = result[1]
-
-            # Decode the base64-encoded hashed password back to bytes
             stored_hashed_password = base64.b64decode(stored_hashed_password_base64.encode('utf-8'))
 
             if bcrypt.checkpw(password.encode('utf-8'), stored_hashed_password):

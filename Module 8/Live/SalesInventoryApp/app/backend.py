@@ -12,6 +12,7 @@ class Backend:
         self.connect()  # Ensure the connection is open
         try:
             # Create the tables
+            self._create_users_table()
             self._create_customers_table()
             self._create_inventory_items_table()
             self._create_orders_table()
@@ -21,6 +22,15 @@ class Backend:
         except sqlite3.Error as e:
             print(f"Error creating database schema: {e}")
             raise  # Re-raise the exception for the calling method to handle
+
+    def _create_users_table(self):
+        self.cursor.execute('''
+            CREATE TABLE IF NOT EXISTS users (
+                username TEXT PRIMARY KEY,
+                password TEXT NOT NULL,
+                role TEXT NOT NULL
+            )
+        ''')
 
     def _create_customers_table(self):
         self.cursor.execute('''
