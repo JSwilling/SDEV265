@@ -29,7 +29,7 @@ class LoginScreen:
 
         # Placeholder for company logo - adjust as needed
         try:
-            self.logo_image = Image.open("placeholder_logo.png")  # Ensure the image exists
+            self.logo_image = Image.open(r"Module 4\Sales_Inventory_App(Beta)\Sales_Inventory_App\placeholder_logo.png")  # Ensure the image exists
             self.logo_ctk_image = customtkinter.CTkImage(self.logo_image, size=(200, 200))
             logo_label = customtkinter.CTkLabel(
                 self.login_frame, image=self.logo_ctk_image, text="", fg_color="#ffffff"
@@ -158,6 +158,16 @@ class LoginScreen:
         # Implement help window functionality here
         messagebox.showinfo("Help", "Please contact support for assistance.")
 
+    def show_register_window(self):
+        if not hasattr(self, 'register_window') or not self.register_window.winfo_exists():
+            self.register_window = RegisterWindow(self.app)
+        else:
+            self.register_window.lift()
+
+    def show_help_window(self):
+        # Implement help window functionality here
+        messagebox.showinfo("Help", "Please contact support for assistance.")
+
 
 class RegisterWindow(customtkinter.CTkToplevel):
     def __init__(self, parent):
@@ -263,7 +273,6 @@ class RegisterWindow(customtkinter.CTkToplevel):
             width=300,
             height=40,
             corner_radius=10,
-            fg_color="#ffffff",
             button_color="#c0392b",
             button_hover_color="#e74c3c",
             text_color="#000000"

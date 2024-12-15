@@ -55,4 +55,3 @@ class ProfileScreen:
             fg_color="#1abc9c", hover_color="#16a085", text_color="#ffffff"
         )
         back_button.pack(pady=20)
-

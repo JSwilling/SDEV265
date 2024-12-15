@@ -4,13 +4,11 @@ from tkinter import StringVar
 import random
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-import time
 import threading
 import matplotlib
 
 # Ensure the correct backend for matplotlib
 matplotlib.use('TkAgg')
-
 
 class DashboardScreen:
     def __init__(self, app):
@@ -139,53 +137,23 @@ class DashboardScreen:
             market_price = float(item_data[4])
             in_demand = "Yes" if quantity_ordered / max(in_house_quantity, 1) > 0.5 else "No"
 
-            # Additional details for fullscreen view
-            if self.app.is_full_screen:
-                product_description = (
-                    f"{item_name} is a high-quality product designed to meet your needs. "
-                    f"It is one of the best in the market, offering exceptional performance and value."
-                )
-                target_market = (
-                    "Target Market: Tech enthusiasts, professionals, and general consumers looking for reliable products."
-                )
-                additional_info = f"Product Description: {product_description}\n{target_market}"
-            else:
-                additional_info = ""
+            detail_text = (
+                f"Item ID: {item_id}\n"
+                f"Item Name: {item_name}\n"
+                f"Quantity Ordered: {quantity_ordered}\n"
+                f"In-house Quantity: {in_house_quantity}\n"
+                f"Market Price: ${market_price:.2f}\n"
+                f"In Demand: {in_demand}"
+            )
 
-            # Animated update for detail view
-            self.animate_detail_view(
-                item_id, item_name, quantity_ordered, in_house_quantity, market_price, in_demand, additional_info
+            self.detail_label.configure(
+                text=detail_text,
+                font=("Courier", 16, "bold"),
+                text_color="#2c3e50"
             )
 
             # Update animated graph
             self.update_animated_graph(quantity_ordered, in_house_quantity)
-
-    def animate_detail_view(self, item_id, item_name, quantity_ordered, in_house_quantity, market_price, in_demand, additional_info):
-        # Clear previous detail text
-        self.detail_label.configure(text="")
-
-        # Create new detail text
-        detail_text = (
-            f"Item ID: {item_id}\n"
-            f"Item Name: {item_name}\n"
-            f"Quantity Ordered: {quantity_ordered}\n"
-            f"In-house Quantity: {in_house_quantity}\n"
-            f"Market Price: ${market_price:.2f}\n"
-            f"In Demand: {in_demand}\n"
-            f"{additional_info}"
-        )
-
-        # Animate typing effect
-        def type_text(index=0):
-            if index <= len(detail_text):
-                self.detail_label.configure(
-                    text=detail_text[:index],
-                    font=("Courier", 16, "bold"),
-                    text_color="#2c3e50"
-                )
-                self.app.after(20, lambda: type_text(index + 1))  # Adjust speed here
-
-        type_text()
 
     def update_animated_graph(self, quantity_ordered, in_house_quantity):
         # Clear previous graph
@@ -199,7 +167,6 @@ class DashboardScreen:
         bars = self.ax.bar(
             categories,
             [0, 0],
-            color=['#3498db', '#2ecc71'],
             edgecolor='black',
             linewidth=0.7
         )
@@ -213,6 +180,6 @@ class DashboardScreen:
                 for bar, value in zip(bars, values):
                     bar.set_height(value * (i / 100))
                 self.canvas.draw()
-                time.sleep(0.005)  # Adjust sleep time as needed
+                threading.Event().wait(0.005)  # Adjust sleep time as needed
 
         threading.Thread(target=animate_bars).start()
